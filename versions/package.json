@@ -1,0 +1,16 @@
+{
+  "name": "sbt_certification",
+  "version": "1.0.0",
+  "type": "module",
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.0.0",
+    "@nomfoundation/hardhat-toolbox": "^3.0.0",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "hardhat": "^2.18.1"
+  },
+  "engines": {
+    "node": "18.13.0"
+  }
+}

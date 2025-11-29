@@ -205,3 +205,7 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+sbt_impl/node_modules/
+sbt_impl/package-lock.json
+sbt_impl/artifacts
+sbt_impl/cache

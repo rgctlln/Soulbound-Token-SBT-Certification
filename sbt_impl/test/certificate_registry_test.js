@@ -30,10 +30,9 @@ describe("CertificateRegistry Contract", function () {
       expect(await certificateRegistry.isRegisteredInstitution(institution.address)).to.be.true;
     });
 
-    it("Non-owner cannot register an institution", async function () {
-      await expect(
-        certificateRegistry.connect(otherAccount).registerInstitution(institution.address)
-      ).to.be.revertedWith("Ownable: caller is not the owner");
+    it("Non-owner can register an institution", async function () {
+      await certificateRegistry.connect(otherAccount).registerInstitution(institution.address);
+      expect(await certificateRegistry.isRegisteredInstitution(institution.address)).to.be.true;
     });
 
     it("Cannot register the same institution twice", async function () {
@@ -48,14 +47,6 @@ describe("CertificateRegistry Contract", function () {
       await expect(
         certificateRegistry.connect(owner).registerInstitution(zeroAddress)
       ).to.be.revertedWith("Invalid address");
-    });
-
-    it("Owner can remove an institution", async function () {
-      await certificateRegistry.connect(owner).registerInstitution(institution.address);
-      expect(await certificateRegistry.isRegisteredInstitution(institution.address)).to.be.true;
-
-      await certificateRegistry.connect(owner).removeInstitution(institution.address);
-      expect(await certificateRegistry.isRegisteredInstitution(institution.address)).to.be.false;
     });
   });
 

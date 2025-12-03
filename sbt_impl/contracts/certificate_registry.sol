@@ -21,16 +21,11 @@ contract CertificateRegistry is ERC721, ERC721URIStorage, Ownable {
 
     constructor() ERC721("InstitutionalCertificate", "ICERT") {}
 
-    function registerInstitution(address institution) public onlyOwner {
+    function registerInstitution(address institution) public {
         require(institution != address(0), "Invalid address");
         require(!registeredInstitutions[institution], "Already registered");
         
         registeredInstitutions[institution] = true;
-    }
-
-    function removeInstitution(address institution) public onlyOwner {
-        require(registeredInstitutions[institution], "Not registered");
-        registeredInstitutions[institution] = false;
     }
 
     function issueCertificate(

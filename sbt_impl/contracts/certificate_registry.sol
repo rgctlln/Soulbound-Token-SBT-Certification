@@ -15,7 +15,7 @@ contract CertificateRegistry is ERC721, ERC721URIStorage, Ownable {
         uint256 issuedAt;
     }
 
-    mapping(string => bool) private _certificateMessageExists;
+    mapping(uint256 => bool) private _tokenExists;
     mapping(uint256 => Certificate) private _certificates;
     mapping(address => bool) public registeredInstitutions;
 
@@ -36,7 +36,6 @@ contract CertificateRegistry is ERC721, ERC721URIStorage, Ownable {
         require(registeredInstitutions[msg.sender], "Not a registered institution");
         require(recipient != address(0), "Invalid recipient");
         require(bytes(certificateMessage).length > 0, "Certificate message required");
-        require(!_certificateMessageExists[certificateMessage], "Certificate message already exists");
         
         _tokenIdCounter += 1;
         uint256 newTokenId = _tokenIdCounter;
@@ -48,7 +47,7 @@ contract CertificateRegistry is ERC721, ERC721URIStorage, Ownable {
             issuedAt: block.timestamp
         });
         
-        _certificateMessageExists[certificateMessage] = true;
+        _tokenExists[newTokenId] = true;
         
         _safeMint(recipient, newTokenId);
         _setTokenURI(newTokenId, tokenURI_);
@@ -56,50 +55,27 @@ contract CertificateRegistry is ERC721, ERC721URIStorage, Ownable {
         return newTokenId;
     }
 
-    function verifyCertificateByNumber(string memory certificateMessage) 
+    function verifyCertificateByTokenId(uint256 tokenId) 
         public 
         view 
         returns (
             bool isValid,
-            uint256 tokenId,
+            string memory certificateMessage,
             address recipient,
             address institution,
             uint256 issuedAt
         )
     {
-        for (uint256 i = 1; i <= _tokenIdCounter; i++) {
-            if (keccak256(bytes(_certificates[i].certificateMessage)) == 
-                keccak256(bytes(certificateMessage))) {
-                
-                address tokenOwner = ownerOf(i);
-                return (
-                    true,
-                    i,
-                    tokenOwner,
-                    _certificates[i].institution,
-                    _certificates[i].issuedAt
-                );
-            }
+        bool exists = _tokenExists[tokenId];
+        if (!exists) {
+            return (false,"", address(0), address(0), 0);
         }
-        
-        return (false, 0, address(0), address(0), 0);
-    }
-
-    function getCertificateInfo(uint256 tokenId) 
-        public 
-        view 
-        returns (
-            string memory certificateMessage,
-            address institution,
-            address recipient,
-            uint256 issuedAt
-        ) 
-    {
         Certificate memory cert = _certificates[tokenId];
         return (
+            true,
             cert.certificateMessage,
-            cert.institution,
             ownerOf(tokenId),
+            cert.institution,
             cert.issuedAt
         );
     }

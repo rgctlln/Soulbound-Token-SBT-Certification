@@ -61,12 +61,14 @@ describe("CertificateRegistry Contract", function () {
 
       await certificateRegistry.connect(institution).issueCertificate(recipient.address, certificateMessage, tokenURI);
 
-      const certInfo = await certificateRegistry.getCertificateInfo(1);
+      const [isValid, retrievedMessage, retrievedOwner, retrievedInstitution, retrievedIssuedAt] =
+        await certificateRegistry.verifyCertificateByTokenId(1);
 
-      expect(certInfo.certificateMessage).to.equal(certificateMessage);
-      expect(certInfo.institution).to.equal(institution.address);
-      expect(certInfo.recipient).to.equal(recipient.address);
-      expect(certInfo.issuedAt).to.be.gt(0);
+      expect(isValid).to.be.true;
+      expect(retrievedMessage).to.equal(certificateMessage);
+      expect(retrievedInstitution).to.equal(institution.address);
+      expect(retrievedOwner).to.equal(recipient.address);
+      expect(retrievedIssuedAt).to.be.gt(0);
 
       expect(await certificateRegistry.ownerOf(1)).to.equal(recipient.address);
       expect(await certificateRegistry.tokenURI(1)).to.equal(tokenURI);
@@ -99,17 +101,6 @@ describe("CertificateRegistry Contract", function () {
       ).to.be.revertedWith("Certificate message required");
     });
 
-    it("Certificate message must be unique", async function () {
-      const certificateMessage = "CERT-001";
-      const tokenURI = "https://example.com/cert/001";
-
-      await certificateRegistry.connect(institution).issueCertificate(recipient.address, certificateMessage, tokenURI);
-
-      await expect(
-        certificateRegistry.connect(institution).issueCertificate(recipient.address, certificateMessage, tokenURI + "-2")
-      ).to.be.revertedWith("Certificate message already exists");
-    });
-
     it("Token IDs should increment correctly", async function () {
       const tokenURI = "https://example.com/cert/";
 
@@ -135,40 +126,48 @@ describe("CertificateRegistry Contract", function () {
       await certificateRegistry.connect(institution).issueCertificate(recipient.address, certificateMessage, tokenURI);
     });
 
-    it("Can verify certificate by message", async function () {
-      const [isValid, retrievedTokenId, certOwner, certInstitution, issuedAt] =
-        await certificateRegistry.verifyCertificateByNumber(certificateMessage);
+    it("Can verify certificate by token ID", async function () {
+      const [isValid, retrievedMessage, certOwner, certInstitution, issuedAt] =
+        await certificateRegistry.verifyCertificateByTokenId(1);
 
       expect(isValid).to.be.true;
-      expect(retrievedTokenId).to.equal(1);
+      expect(retrievedMessage).to.equal(certificateMessage);
       expect(certOwner).to.equal(recipient.address);
       expect(certInstitution).to.equal(institution.address);
       expect(issuedAt).to.be.gt(0);
     });
 
-    it("Verifying non-existent certificate message returns false", async function () {
-      const [isValid, tokenId, certOwner, certInstitution, issuedAt] =
-        await certificateRegistry.verifyCertificateByNumber("NON-EXISTENT-999");
+    it("Verifying non-existent token ID returns false", async function () {
+      const [isValid, retrievedMessage, certOwner, certInstitution, issuedAt] =
+        await certificateRegistry.verifyCertificateByTokenId(999);
 
       expect(isValid).to.be.false;
-      expect(tokenId).to.equal(0);
+      expect(retrievedMessage).to.equal("");
       expect(certOwner).to.equal(ethers.ZeroAddress);
       expect(certInstitution).to.equal(ethers.ZeroAddress);
       expect(issuedAt).to.equal(0);
     });
 
     it("Can query certificate info by token ID", async function () {
-      const [retrievedMessage, retrievedInstitution, retrievedOwner, retrievedIssuedAt] =
-        await certificateRegistry.getCertificateInfo(1);
+      const [isValid, retrievedMessage, retrievedOwner, retrievedInstitution, retrievedIssuedAt] =
+        await certificateRegistry.verifyCertificateByTokenId(1);
 
+      expect(isValid).to.be.true;
       expect(retrievedMessage).to.equal(certificateMessage);
       expect(retrievedInstitution).to.equal(institution.address);
       expect(retrievedOwner).to.equal(recipient.address);
       expect(retrievedIssuedAt).to.be.gt(0);
     });
 
-    it("Querying non-existent token ID should revert", async function () {
-      await expect(certificateRegistry.getCertificateInfo(999)).to.be.reverted;
+    it("Querying non-existent token ID returns invalid result", async function () {
+      const [isValid, retrievedMessage, retrievedOwner, retrievedInstitution, retrievedIssuedAt] =
+        await certificateRegistry.verifyCertificateByTokenId(999);
+
+      expect(isValid).to.be.false;
+      expect(retrievedMessage).to.equal("");
+      expect(retrievedOwner).to.equal(ethers.ZeroAddress);
+      expect(retrievedInstitution).to.equal(ethers.ZeroAddress);
+      expect(retrievedIssuedAt).to.equal(0);
     });
   });
 
